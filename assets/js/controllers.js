@@ -43,12 +43,16 @@ peopleApp.controller("people", function($scope, $http, $filter) {
         $scope.paginationLimit = function(data) {
             return pageSize * pagesShown;
         };
-
-        $scope.hasMoreItemsToShow = function() {
-            return pagesShown < ($scope.people.length / pageSize);
+        /* 
+            Notice that we use filteredCount variable not people.
+            Change it to people and see that show more button doesn't hide even when search(filter) result is one record.
+            So if you use filter then variable must be filteredCount but if not then change it to people.
+        */
+        $scope.hasMoreItemsToShow = function(data) {
+            return pagesShown < ($scope.filteredCount.length / pageSize);
         };
 
-        $scope.showMoreItems = function() {
+        $scope.showMoreItems = function(data) {
             pagesShown = pagesShown + 1;
         };
     };
@@ -104,7 +108,7 @@ peopleApp.controller("people", function($scope, $http, $filter) {
         $scope.updateData = this.row;
         var id = $scope.updateData.id;
 
-	    $http({
+        $http({
             method: 'POST',
             url: config.base + 'main/read',
             headers: {
