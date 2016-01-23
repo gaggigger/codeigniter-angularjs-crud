@@ -1,0 +1,13 @@
+{
+  "name": "CodeIgniter and angularJS Crud",
+  "description": "Simple, Secure and Well Commented Code",
+  "version": "0.0.0",
+  "homepage": "",
+  "license": "",
+  "private": false,
+  "dependencies": {
+    "angular": "1.4.x",
+    "jquery": "2.2.0",
+    "bootstrap": "3.3.6"
+  }
+}
