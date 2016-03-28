@@ -52,7 +52,8 @@ class Main extends CI_Controller {
 			'name'=> $this->input->get('name'),
 			'city'=> $this->input->get('city'),
 			'country'=> $this->input->get('country'),
-			'image'=> $this->input->get('image')
+			'image'=> $this->input->get('image'),
+			'descr'=> $this->input->get('descr')
 		);
 		// clean data (xss filtering)
 		$data = $this->security->xss_clean($data);
@@ -71,7 +72,8 @@ class Main extends CI_Controller {
 			'name'=> $this->input->get('name'),
 			'city'=> $this->input->get('city'),
 			'country'=> $this->input->get('country'),
-			'image'=> $this->input->get('image')
+			'image'=> $this->input->get('image'),
+			'descr'=> $this->input->get('descr')
 		);
 		// clean data (xss filtering)
 		$data = $this->security->xss_clean($data);
@@ -89,6 +91,14 @@ class Main extends CI_Controller {
 		$id = $this->security->xss_clean($id);
 		// send data to model
 		$this->people->delete($id);
+		// get data for multi deletion
+		if ($this->input->get('idArray')) {
+			$idArray = $this->input->get('idArray');
+			$idArray = explode(",", $idArray);
+			foreach($idArray as $id){
+			    $this->people->delete($id);
+			}
+		}
 	}
 
 	/* ---------------------------------------------------------------------------------------------------------------------- */

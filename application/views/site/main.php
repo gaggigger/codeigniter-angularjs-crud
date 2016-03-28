@@ -4,6 +4,7 @@
 <html lang="en-US">
 <head>
 	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Learn angular</title>
 
     <!-- css assets -->
@@ -15,13 +16,34 @@
     <script src="<?=base_url()?>assets/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="<?=base_url()?>assets/bower_components/angular/angular.min.js"></script>
 
-    <script>
+    <script type="text/javascript" src="<?=base_url()?>assets/bower_components/ckeditor/ckeditor.js"></script>
+    <script type="text/javascript" src="<?=base_url()?>assets/js/ng_ckeditor.js"></script>
+	<script>
+	/* config variables */
 	var config = {
 		base: "<?=base_url()?>"
 	};
+
+	/* filemanager scripts */
+	function open_popup(url)
+	{
+	    var w = 880;
+	    var h = 570;
+	    var l = Math.floor((screen.width-w)/2);
+	    var t = Math.floor((screen.height-h)/2);
+	    var win = window.open(url, 'Filemanager', "scrollbars=1,width=" + w + ",height=" + h + ",top=" + t + ",left=" + l);
+	}
+	function responsive_filemanager_callback(field_id){
+		$("#"+field_id).change();
+	}
+	/* end */
+	$(document).ready(function(){
+		$("#createdescr").blur(function(){
+			$("#createdescr").change();
+		});
+	});
 	</script>
 	<script src="<?=base_url()?>assets/js/app.js"></script>
-	<script src="<?=base_url()?>assets/js/controllers.js"></script>
 </head>
 <body ng-app="peopleApp" ng-controller="people" ng-init="showData()">
 
@@ -42,7 +64,7 @@
 			<div class="form-group">
 				<input type="text" class="form-control" placeholder="Search" ng-model="search" ng-keyup="searchResultCount(search)">
 			</div>
-			<button ng-click="order=''" class="btn">Reset Sorting</button>
+			<button ng-click="order='reverse'" class="btn">Reset Sorting</button>
 		</caption>
 		<thead>
 			<tr>
@@ -66,7 +88,12 @@
 				</th>
 				<th class="text-center">Read</th>
 				<th class="text-center">Update</th>
-				<th class="text-center">Delete</th>
+				<th class="text-center">
+					Delete
+					<a class="btn btn-xs btn-default" ng-click="multiDelete()">
+						<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+					</a>
+				</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -88,6 +115,7 @@
 					<a class="btn btn-xs btn-default" ng-click="delete()">
 						<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
 					</a>
+					<input type="checkbox" class="multi-delete" ng-value="row.id" ng-model="row.selected" />
 				</td>
 			</tr>
 		</tbody>
@@ -115,23 +143,30 @@
 	    	</div>
 			<form ng-submit="create()" class="modal-body" role="form" method="POST">
 				<div class="form-group">
-					<label for="create-name">Insert Your Name</label>
-					<input type="text" id="create-name" class="form-control" placeholder="Insert your name" ng-model="name"></input>
+					<label>Name</label>
+					<input type="text" class="form-control" ng-model="createname" />
 				</div>
 				<div class="form-group">
-					<label for="create-city">Insert Your City</label>
-					<input type="text" id="create-city" class="form-control" placeholder="Insert your city" ng-model="city"></input>
+					<label>City</label>
+					<input type="text" class="form-control" ng-model="createcity" />
 				</div>
 				<div class="form-group">
-					<label for="create-country">Insert Your Country</label>
-					<input type="text" id="create-country" class="form-control" placeholder="Insert your Country" ng-model="country"></input>
+					<label>Country</label>
+					<input type="text" class="form-control" ng-model="createcountry" />
+				</div>
+				<div class="form-group form-inline">
+					<label>Image</label>
+					<div class="form-inline">
+						<input type="text" id="createimage" class="form-control" ng-model="createimage" />
+						<a href="javascript:open_popup('filemanager/dialog.php?type=2&popup=1&field_id=createimage')" class="btn btn-default">Select</a>
+					</div>
 				</div>
 				<div class="form-group">
-					<label for="create-image">Insert Image Link</label>
-					<input type="text" id="create-image" class="form-control" placeholder="Insert Image Link" ng-model="image"></input>
+					<label>Description</label>
+					<textarea ckeditor="editorOptions" id="createdescr" class="form-control" ng-model="createdescr"></textarea>
 				</div>
 
-				<button type="submit" class="btn btn-default btn-primary">Create Record</button>
+				<button type="submit" id="createData" class="btn btn-default btn-primary">Create Record</button>
 			</form>
 			<div class="modal-footer">
 		      	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -152,10 +187,12 @@
 		    <div class="modal-body">
 		    	<p>{{ readPerson.name }}</p>
 		      	<img ng-show="readPerson.image" ng-src="{{ readPerson.image }}" class="img-thumbnail img-square" />
-		      	<img ng-hide="readPerson.image" src="http://www.bitrebels.com/wp-content/uploads/2011/02/Original-Facebook-Geek-Profile-Avatar-1.jpg" class="img-thumbnail img-square" />
+		      	<img ng-hide="readPerson.image" src="<?=base_url()?>uploads/gravatar.jpg" class="img-thumbnail img-square" />
 		      	<br /><br />
 		      	<p>{{ readPerson.city }}</p>
 		      	<p>{{ readPerson.country }}</p>
+		      	<hr />
+		      	<div ng-bind-html="readPerson.descr | unsafe"></div>
 		    </div>
 		    <div class="modal-footer">
 		      	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -176,21 +213,31 @@
 	    	</div>
 		    <form ng-submit="updateSubmit()" role="form" method="POST" class="modal-body">
 		    	<div class="form-group">
-		    		<label for="update-name">Name</label>
-		    		<input type="text" id="update-name" ng-model="readPerson.name" class="form-control" />
+		    		<label for="updatename">Name</label>
+		    		<input type="text" id="updatename" ng-model="readPerson.name" class="form-control" />
 		    	</div>
 		    	<div class="form-group">
-		    		<label for="update-city">City</label>
-		    		<input type="text" id="update-city" ng-model="readPerson.city" class="form-control" />
+		    		<label for="updatecity">City</label>
+		    		<input type="text" id="updatecity" ng-model="readPerson.city" class="form-control" />
 		    	</div>
 		    	<div class="form-group">
-		    		<label for="update-country">Country</label>
-		    		<input type="text" id="update-country" ng-model="readPerson.country" class="form-control" />
+		    		<label for="updatecountry">Country</label>
+		    		<input type="text" id="updatecountry" ng-model="readPerson.country" class="form-control" />
 		    	</div>
-		    	<div class="form-group">
-		    		<label for="update-image">Image Link</label>
-		    		<input type="text" id="update-image" ng-model="readPerson.image" class="form-control" />
-		    	</div>
+		    	<img ng-show="readPerson.image" ng-src="{{ readPerson.image }}" class="img-thumbnail img-square" />
+		      	<img ng-hide="readPerson.image" src="<?=base_url()?>uploads/gravatar.jpg" class="img-thumbnail img-square" />
+		      	<br /><br />
+		    	<div class="form-group form-inline">
+					<label for="updateimage">Image</label>
+					<div class="form-inline">
+						<input type="text" id="updateimage" class="form-control" ng-model="readPerson.image" />
+						<a href="javascript:open_popup('filemanager/dialog.php?type=2&popup=1&field_id=updateimage')" class="btn btn-default">Select</a>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="updatedescr">Description</label>
+					<textarea ckeditor="editorOptions" id="updatedescr" class="form-control editor" ng-model="readPerson.descr"></textarea>
+				</div>
 
 		    	<button type="submit" class="btn btn-default btn-primary">Update Record</button>
 		    </form>
